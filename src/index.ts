@@ -28,9 +28,20 @@ const PORT = process.env.PORT ?? 4000;
 app.use(helmet());
 
 // CORS
+const allowedOrigins = (process.env.FRONTEND_URL ?? 'http://localhost:3000')
+  .split(',')
+  .map((o) => o.trim());
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. curl, mobile apps, server-to-server)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS: origin '${origin}' not allowed`));
+      }
+    },
     credentials: true,
   })
 );
@@ -45,6 +56,16 @@ app.use(express.urlencoded({ extended: true }));
 // Health check
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Root route — confirms the API is running
+app.get('/', (_req, res) => {
+  res.json({
+    name: 'ITAM API',
+    version: '1.0.0',
+    status: 'running',
+    docs: '/health',
+  });
 });
 
 // API routes
