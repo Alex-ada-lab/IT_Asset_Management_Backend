@@ -36,5 +36,7 @@ export function errorHandler(
   res.status(500).json({
     error: 'Internal server error',
     ...(isProduction ? {} : { detail: err instanceof Error ? err.stack : String(err) }),
+    // Always include the message (not stack) to help diagnose misconfiguration
+    message: err instanceof Error ? err.message : String(err),
   });
 }

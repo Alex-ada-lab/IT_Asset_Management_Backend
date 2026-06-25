@@ -3,6 +3,8 @@ import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './swagger';
 import { errorHandler } from './middleware/errorHandler';
 import authRouter from './routes/auth';
 import adminRouter from './routes/admin';
@@ -56,6 +58,17 @@ app.use(express.urlencoded({ extended: true }));
 // Health check
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Swagger UI — available at /api/docs
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customSiteTitle: 'ITAM API Docs',
+  swaggerOptions: { persistAuthorization: true },
+}));
+// Raw OpenAPI JSON — useful for importing into Postman
+app.get('/api/docs.json', (_req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
 });
 
 // Root route — confirms the API is running
