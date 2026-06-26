@@ -194,7 +194,7 @@ router.post(
       const token = signToken({
         userId: user.id,
         email: user.email,
-        roleId: user.role_id ?? '',
+        roleId: user.role_id ?? null,
       });
 
       // Write audit log

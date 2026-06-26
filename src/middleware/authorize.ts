@@ -3,15 +3,9 @@ import pool from '../db/pool';
 import { Permission, ROLE_PERMISSIONS } from '../config/permissions';
 import { ForbiddenError, UnauthorizedError } from '../errors';
 
-/**
- * Authorization middleware factory.
- *
- * Returns an Express middleware that checks whether the authenticated user
- * holds the given permission. Must be used AFTER the `authenticate` middleware
- * (which populates `req.user`).
- *
- * @param permission - The permission required to access the route.
- */
+// Simple UUID v4 format check
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function authorize(permission: Permission) {
   return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -21,13 +15,18 @@ export function authorize(permission: Permission) {
 
       const { roleId } = req.user;
 
+      // Guard: missing, empty, or non-UUID roleId means no role assigned
+      if (!roleId || !UUID_REGEX.test(roleId)) {
+        throw new ForbiddenError('No role assigned. Ask an administrator to assign you a role.');
+      }
+
       const result = await pool.query<{ name: string }>(
         'SELECT name FROM roles WHERE id = $1',
         [roleId]
       );
 
       if (result.rowCount === 0) {
-        throw new ForbiddenError('You do not have permission to perform this action');
+        throw new ForbiddenError('Your assigned role no longer exists. Contact an administrator.');
       }
 
       const roleName = result.rows[0].name;

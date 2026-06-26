@@ -40,7 +40,7 @@ export async function authenticate(
     req.user = {
       userId: payload['userId'] as string,
       email: payload['email'] as string,
-      roleId: payload['roleId'] as string,
+      roleId: (payload['roleId'] as string | null) ?? '',
       jti,
     };
 
